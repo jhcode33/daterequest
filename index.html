@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>경주월드 데이트 신청</title>
+<style>
+  :root{
+    --pink:#ff5c8a;
+    --pink-dark:#e63e70;
+    --bg1:#ffe3ec;
+    --bg2:#ffc1d9;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    padding:0;
+    width:100%;
+    min-height:100%;
+    overflow-x:hidden;
+  }
+  body{
+    min-height:100vh;
+    min-height:100dvh;
+    font-family:"Malgun Gothic","Apple SD Gothic Neo",-apple-system,BlinkMacSystemFont,sans-serif;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    padding:24px;
+    padding-top:calc(24px + env(safe-area-inset-top));
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    padding-left:calc(24px + env(safe-area-inset-left));
+    padding-right:calc(24px + env(safe-area-inset-right));
+    overscroll-behavior:contain;
+    touch-action:manipulation;
+  }
+
+  .card{
+    position:relative;
+    z-index:2;
+    background:rgba(255,255,255,0.9);
+    border-radius:28px;
+    box-shadow:0 20px 50px rgba(230,62,112,0.25);
+    padding:clamp(28px,7vw,44px) clamp(20px,6vw,36px) clamp(26px,6vw,40px);
+    max-width:420px;
+    width:100%;
+    text-align:center;
+    animation:pop-in .6s ease;
+  }
+
+  @keyframes pop-in{
+    0%{transform:scale(.85);opacity:0;}
+    100%{transform:scale(1);opacity:1;}
+  }
+
+  .emoji-top{
+    font-size:clamp(34px,9vw,48px);
+    margin-bottom:6px;
+    animation:float 3s ease-in-out infinite;
+  }
+  @keyframes float{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-8px);}
+  }
+
+  h1{
+    font-size:clamp(18px,5vw,22px);
+    line-height:1.5;
+    color:#3a2233;
+    margin:8px 0 6px;
+  }
+  .date-badge{
+    display:inline-block;
+    background:var(--pink);
+    color:#fff;
+    font-weight:bold;
+    padding:6px 16px;
+    border-radius:999px;
+    font-size:clamp(13px,3.6vw,15px);
+    margin-bottom:14px;
+  }
+  p.sub{
+    color:#8a6273;
+    font-size:clamp(12px,3.2vw,14px);
+    margin:0 0 clamp(20px,6vw,30px);
+  }
+
+  .btn-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    justify-content:center;
+    position:relative;
+    min-height:64px;
+    align-items:center;
+  }
+
+  button{
+    border:none;
+    outline:none;
+    cursor:pointer;
+    font-size:clamp(14px,4vw,17px);
+    font-weight:bold;
+    padding:clamp(11px,3.2vw,14px) clamp(16px,5vw,26px);
+    border-radius:16px;
+    font-family:inherit;
+    transition:transform .15s ease, box-shadow .15s ease, top .35s ease, left .35s ease;
+    white-space:nowrap;
+    user-select:none;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  #likeBtn{
+    background:linear-gradient(135deg,#ff8bab,var(--pink-dark));
+    color:#fff;
+    box-shadow:0 10px 24px rgba(230,62,112,0.4);
+  }
+  #likeBtn:hover{transform:translateY(-3px) scale(1.04);}
+  #likeBtn:active{transform:translateY(0) scale(.97);}
+
+  #dislikeBtn{
+    background:#f1e6ea;
+    color:#a1728a;
+    box-shadow:0 6px 14px rgba(0,0,0,0.08);
+    z-index:50;
+  }
+  #dislikeBtn.roaming{
+    position:fixed;
+    z-index:999;
+  }
+
+  .taunt{
+    position:fixed;
+    z-index:998;
+    font-size:13px;
+    color:var(--pink-dark);
+    background:#fff;
+    padding:6px 12px;
+    border-radius:999px;
+    box-shadow:0 6px 16px rgba(0,0,0,0.12);
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .25s ease;
+    white-space:nowrap;
+  }
+  .taunt.show{opacity:1;}
+
+  /* fireworks canvas */
+  #fireworks{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    z-index:900;
+    display:none;
+  }
+
+  /* love overlay */
+  #loveOverlay{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    z-index:1000;
+    text-align:center;
+    pointer-events:none;
+    padding:24px;
+  }
+  #loveOverlay.show{display:flex;}
+
+  .love-text{
+    font-size:clamp(34px,12vw,56px);
+    color:var(--pink-dark);
+    text-shadow:0 4px 16px rgba(255,255,255,0.9), 0 0 40px rgba(255,92,138,0.6);
+    font-weight:900;
+    opacity:0;
+    transform:scale(.4) rotate(-8deg);
+    animation:love-pop 1s cubic-bezier(.34,1.56,.64,1) forwards;
+    padding:0 16px;
+  }
+  @keyframes love-pop{
+    0%{opacity:0; transform:scale(.3) rotate(-10deg);}
+    60%{opacity:1; transform:scale(1.15) rotate(3deg);}
+    100%{opacity:1; transform:scale(1) rotate(0deg);}
+  }
+
+  .love-sub{
+    margin-top:14px;
+    font-size:clamp(14px,4vw,18px);
+    color:#7a2f4c;
+    background:rgba(255,255,255,0.85);
+    padding:10px 18px;
+    border-radius:999px;
+    opacity:0;
+    animation:fade-up .8s ease .5s forwards;
+    max-width:100%;
+  }
+  @keyframes fade-up{
+    0%{opacity:0; transform:translateY(14px);}
+    100%{opacity:1; transform:translateY(0);}
+  }
+
+  .close-love{
+    margin-top:26px;
+    padding:10px 22px;
+    border-radius:999px;
+    background:var(--pink-dark);
+    color:#fff;
+    font-size:14px;
+    opacity:0;
+    animation:fade-up .8s ease .9s forwards;
+    pointer-events:auto;
+    cursor:pointer;
+    border:none;
+  }
+
+  .heart{
+    position:fixed;
+    bottom:-40px;
+    font-size:24px;
+    z-index:999;
+    pointer-events:none;
+    animation:rise linear forwards;
+  }
+  @keyframes rise{
+    0%{transform:translateY(0) translateX(0) rotate(0deg); opacity:1;}
+    100%{transform:translateY(-110vh) translateX(var(--drift,0px)) rotate(360deg); opacity:0;}
+  }
+</style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="emoji-top">🎢💕</div>
+    <div class="date-badge">09월 19일 (토)</div>
+    <h1>경주월드 데이트를<br>신청합니다!</h1>
+    <p class="sub">신중하게 선택해주세요 :)</p>
+
+    <div class="btn-row" id="btnRow">
+      <button id="likeBtn">좋아요! 🥰</button>
+      <button id="dislikeBtn">싫어요! 😤</button>
+    </div>
+  </div>
+
+  <canvas id="fireworks"></canvas>
+
+  <div id="loveOverlay">
+    <div class="love-text">사랑해요! 💖</div>
+    <div class="love-sub">09월 19일 토요일, 경주월드에서 만나요 🎡</div>
+    <button class="close-love" id="closeLove">닫기</button>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- 좋아요 버튼: 폭죽 + 사랑해 애니메이션 ---------------- */
+  const likeBtn = document.getElementById('likeBtn');
+  const overlay = document.getElementById('loveOverlay');
+  const closeLoveBtn = document.getElementById('closeLove');
+  const canvas = document.getElementById('fireworks');
+  const ctx = canvas.getContext('2d');
+  let animId = null;
+  let particles = [];
+
+  function resizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  const colors = ['#ff5c8a','#ffd166','#06d6a0','#4cc9f0','#c77dff','#ff9f1c','#ff6b6b'];
+
+  function spawnBurst(x,y){
+    const count = 55;
+    for(let i=0;i<count;i++){
+      const angle = (Math.PI*2*i)/count + Math.random()*0.3;
+      const speed = 3 + Math.random()*5;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle)*speed,
+        vy: Math.sin(angle)*speed,
+        life: 1,
+        decay: 0.008 + Math.random()*0.012,
+        color: colors[Math.floor(Math.random()*colors.length)],
+        size: 2 + Math.random()*2.5
+      });
+    }
+  }
+
+  function fireworksLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      p.vy += 0.06; // gravity
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= p.decay;
+      ctx.globalAlpha = Math.max(p.life,0);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fill();
+    });
+    particles = particles.filter(p=>p.life>0);
+    ctx.globalAlpha = 1;
+    if(particles.length>0){
+      animId = requestAnimationFrame(fireworksLoop);
+    } else {
+      canvas.style.display = 'none';
+      animId = null;
+    }
+  }
+
+  function launchFireworks(){
+    canvas.style.display = 'block';
+    resizeCanvas();
+    particles = [];
+    const bursts = 5;
+    for(let i=0;i<bursts;i++){
+      setTimeout(()=>{
+        const x = canvas.width*0.2 + Math.random()*canvas.width*0.6;
+        const y = canvas.height*0.15 + Math.random()*canvas.height*0.35;
+        spawnBurst(x,y);
+        if(!animId) fireworksLoop();
+      }, i*260);
+    }
+  }
+
+  function spawnHearts(){
+    const emojis = ['💖','💕','❤️','💗','💘'];
+    const total = 22;
+    for(let i=0;i<total;i++){
+      setTimeout(()=>{
+        const h = document.createElement('div');
+        h.className = 'heart';
+        h.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+        h.style.left = Math.random()*100 + 'vw';
+        h.style.fontSize = (16 + Math.random()*22) + 'px';
+        h.style.setProperty('--drift', (Math.random()*160-80)+'px');
+        const duration = 3 + Math.random()*2.5;
+        h.style.animationDuration = duration + 's';
+        document.body.appendChild(h);
+        setTimeout(()=>h.remove(), duration*1000 + 100);
+      }, i*90);
+    }
+  }
+
+  likeBtn.addEventListener('click', function(){
+    launchFireworks();
+    spawnHearts();
+    overlay.classList.add('show');
+  });
+
+  closeLoveBtn.addEventListener('click', function(){
+    overlay.classList.remove('show');
+  });
+
+  /* ---------------- 싫어요 버튼: 절대 못 누르게 도망 ---------------- */
+  const dislikeBtn = document.getElementById('dislikeBtn');
+  const btnRow = document.getElementById('btnRow');
+  let roaming = false;
+  const margin = 16;
+  let lastMoveTime = 0;
+
+  function getDodgeRadius(){
+    // 좁은 화면에서는 감지 반경을 살짝 줄여 도망 공간을 확보
+    return Math.max(70, Math.min(130, window.innerWidth*0.32));
+  }
+
+  const taunts = [
+    '잡아봐요~ 😝',
+    '못 잡아요!',
+    '어림도 없죠 🏃',
+    '싫어요는 금지!',
+    '더 빨리 도망갈게요 💨',
+    '포기하지 않을 거예요 😆'
+  ];
+  const taunt = document.createElement('div');
+  taunt.className = 'taunt';
+  document.body.appendChild(taunt);
+
+  function showTaunt(x,y){
+    taunt.textContent = taunts[Math.floor(Math.random()*taunts.length)];
+    let tx = x + 10;
+    let ty = y - 40;
+    tx = Math.min(Math.max(tx,8), window.innerWidth - 140);
+    ty = Math.min(Math.max(ty,8), window.innerHeight - 40);
+    taunt.style.left = tx + 'px';
+    taunt.style.top = ty + 'px';
+    taunt.classList.add('show');
+    clearTimeout(taunt._hideT);
+    taunt._hideT = setTimeout(()=>taunt.classList.remove('show'), 900);
+  }
+
+  function activateRoaming(){
+    if(roaming) return;
+    roaming = true;
+    const rect = dislikeBtn.getBoundingClientRect();
+    dislikeBtn.style.top = rect.top + 'px';
+    dislikeBtn.style.left = rect.left + 'px';
+    dislikeBtn.classList.add('roaming');
+    // force reflow so transition applies to next move
+    void dislikeBtn.offsetWidth;
+  }
+
+  function randomSafePosition(avoidX, avoidY){
+    const w = dislikeBtn.offsetWidth || 120;
+    const h = dislikeBtn.offsetHeight || 50;
+    const maxX = window.innerWidth - w - margin;
+    const maxY = window.innerHeight - h - margin;
+    let bestPos = null;
+    let bestDist = -1;
+    for(let i=0;i<10;i++){
+      const x = margin + Math.random()*Math.max(maxX-margin,0);
+      const y = margin + Math.random()*Math.max(maxY-margin,0);
+      const cx = x + w/2, cy = y + h/2;
+      const d = (avoidX!=null) ? Math.hypot(cx-avoidX, cy-avoidY) : 9999;
+      if(d > bestDist){
+        bestDist = d;
+        bestPos = {x,y};
+      }
+    }
+    return bestPos;
+  }
+
+  function dodge(px, py){
+    activateRoaming();
+    const pos = randomSafePosition(px, py);
+    dislikeBtn.style.left = pos.x + 'px';
+    dislikeBtn.style.top = pos.y + 'px';
+    showTaunt(px!=null?px:pos.x, py!=null?py:pos.y);
+    lastMoveTime = Date.now();
+  }
+
+  function proximityCheck(clientX, clientY){
+    const rect = dislikeBtn.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const dist = Math.hypot(clientX-cx, clientY-cy);
+    if(dist < getDodgeRadius() && Date.now()-lastMoveTime > 60){
+      dodge(clientX, clientY);
+    }
+  }
+
+  function clampToViewport(){
+    if(!roaming) return;
+    const w = dislikeBtn.offsetWidth;
+    const h = dislikeBtn.offsetHeight;
+    const maxX = Math.max(margin, window.innerWidth - w - margin);
+    const maxY = Math.max(margin, window.innerHeight - h - margin);
+    const rect = dislikeBtn.getBoundingClientRect();
+    const x = Math.min(Math.max(rect.left, margin), maxX);
+    const y = Math.min(Math.max(rect.top, margin), maxY);
+    dislikeBtn.style.left = x + 'px';
+    dislikeBtn.style.top = y + 'px';
+  }
+  window.addEventListener('resize', clampToViewport);
+  window.addEventListener('orientationchange', clampToViewport);
+
+  document.addEventListener('mousemove', function(e){
+    proximityCheck(e.clientX, e.clientY);
+  });
+
+  document.addEventListener('touchmove', function(e){
+    if(e.touches && e.touches[0]){
+      proximityCheck(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, {passive:true});
+
+  dislikeBtn.addEventListener('touchstart', function(e){
+    e.preventDefault();
+    const t = e.touches[0];
+    dodge(t.clientX, t.clientY);
+  }, {passive:false});
+
+  dislikeBtn.addEventListener('pointerenter', function(e){
+    dodge(e.clientX, e.clientY);
+  });
+
+  // 만약을 대비한 최후 방어: 클릭이 어떻게든 발생해도 무효화하고 다시 도망
+  dislikeBtn.addEventListener('click', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    dodge(e.clientX, e.clientY);
+  });
+
+})();
+</script>
+</body>
+</html>
